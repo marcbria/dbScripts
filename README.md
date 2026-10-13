@@ -64,6 +64,4 @@ Create a `.lst` file with one instance per line (container name or configured al
 <i class="fa-solid fa-triangle-exclamation"></i> Restrict usage to controlled environments.
 
 ## License
-
-GPL-3.0 
-See `LICENSE` for details.
+GNU General Public License v3. See `LICENSE`.
