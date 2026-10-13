@@ -1,12 +1,4 @@
----
-title: dbScripts
-description: Bash scripts to run SQL queries against multiple OJS database containers in batch.
-license: GPL-3.0
----
-
-# dbScripts
-
-Bash scripts to run SQL queries against multiple OJS (Open Journal Systems) database containers in batch. Designed for multi-journal deployments where the same query must be executed across many instances for audits, reports or diagnostics.
+Bash scripts to run SQL queries against multiple OJS (Open Journal Systems) database containers in batch. Designed for multi-journal deployments where the same query must be executed across many OJS instances for audits, reports or diagnostics.
 
 ## What it does
 
@@ -73,4 +65,5 @@ Create a `.lst` file with one instance per line (container name or configured al
 
 ## License
 
-See `LICENSE`.
+GPL-3.0 
+See `LICENSE` for details.
