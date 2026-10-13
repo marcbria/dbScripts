@@ -19,16 +19,12 @@
 #                       Otherwise, creates one file per journal without extra column.
 # =============================================================================
 
-# =======================
 # Constants
-# =======================
 SITES_BASE_DIR="/home/docker/sites"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"   # Absolute path of script directory
 OUTPUT_DIR="${SCRIPT_DIR}/outputs"
 
-# =======================
 # Functions
-# =======================
 checkArguments() {
     if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
         echo "Usage: $0 <sqlQueryFile> <journalsListFile> [singleFile]"
@@ -57,17 +53,17 @@ executeQueryForJournal() {
     local sqlFilePath="$SCRIPT_DIR/$sqlFile"
 
     if [ ! -d "$siteDir" ]; then
-        echo "❌ Directory $siteDir does not exist. Skipping $journalTag." >&2
+        echo "❌ $journalTag: Directory $siteDir does not exist. Skipping journal." >&2
         return 1
     fi
 
     if [ ! -f "$envFile" ]; then
-        echo "❌ Env file $envFile not found. Skipping $journalTag." >&2
+        echo "❌ $journalTag: Env file $envFile not found. Skipping journal." >&2
         return 1
     fi
 
     if [ ! -f "$sqlFilePath" ]; then
-        echo "❌ SQL file $sqlFilePath does not exist. Skipping $journalTag." >&2
+        echo "❌ $journalTag: SQL file $sqlFilePath does not exist. Skipping journal." >&2
         return 1
     fi
 
@@ -86,7 +82,7 @@ executeQueryForJournal() {
         local status=$?
 
         if [ $status -ne 0 ]; then
-            echo "❌ Error executing query for $journalTag:" >&2
+            echo "❌ $journalTag: Error executing query." >&2
             cat "$stderr_temp" >&2
             rm -f "$stdout_temp" "$stderr_temp"
             return 1
@@ -109,9 +105,9 @@ executeQueryForJournal() {
         local status=$?
 
         if [ $status -eq 0 ]; then
-            echo "✅ Query executed successfully for $journalTag"
+            echo "✅ $journalTag: Query executed successfully."
         else
-            echo "❌ Error executing query for $journalTag (details saved in $outputFile)" >&2
+            echo "❌ $journalTag: Error executing query (details saved in $outputFile)" >&2
             return 1
         fi
         return 0
@@ -132,7 +128,7 @@ runQueryForAllJournals() {
         combinedFile="$OUTPUT_DIR/combined_${timestamp}.tsv"
         mkdir -p "$OUTPUT_DIR"
         > "$combinedFile"
-        echo "📦 Modo combinado: se generará $combinedFile"
+        echo "📦 Combined mode. File generated: $combinedFile"
     fi
 
     for journalTag in "${journalTags[@]}"; do
@@ -155,7 +151,7 @@ runQueryForAllJournals() {
                     tail -n +2 "$stdout_temp" | awk -v tag="$journalTag" -v OFS='\t' '{print tag, $0}' >> "$combinedFile"
                 fi
                 rm -f "$stdout_temp"
-                echo "✅ Datos de $journalTag añadidos al archivo combinado"
+                echo "✅ $journalTag: Successfully added."
             else
                 # Error en la ejecución del journal
                 if $header_defined; then
@@ -167,9 +163,9 @@ runQueryForAllJournals() {
                         error_line+=$'\tError'
                     done
                     echo "$error_line" >> "$combinedFile"
-                    echo "⚠️ Línea de error añadida para $journalTag (consulta fallida)"
+                    echo "⚠️  $journalTag: Failed. Added error line."
                 else
-                    echo "⚠️ No se pudo añadir línea de error para $journalTag porque aún no hay cabecera definida." >&2
+                    echo "⚠️  $journalTag: Unable to add an error line (header is not yet defined)." >&2
                 fi
                 errors=$((errors+1))
             fi
@@ -181,17 +177,17 @@ runQueryForAllJournals() {
 
     if [ "$singleFile" = "1" ]; then
         if ! $header_defined; then
-            echo "⚠️ No se pudo procesar ningún journal correctamente. No se generó archivo combinado." >&2
+            echo "⚠️  ERROR: Unable to generate the combined file because no journal could be processed correctly." >&2
             rm -f "$combinedFile"
         else
-            echo "✅ Archivo combinado generado: $combinedFile"
+            echo "✅ Combined file: $combinedFile"
         fi
     fi
 
     if [ $errors -eq 0 ]; then
-        echo "✅ Todos los journals procesados correctamente."
+        echo "✅ SUCCESS: All journals correctly processed."
     else
-        echo "⚠️ Procesamiento completado con $errors errores."
+        echo "⚠️  PARTIAL: Process completed with $errors errors."
     fi
 
     return $errors
