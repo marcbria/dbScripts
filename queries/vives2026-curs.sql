@@ -9,7 +9,7 @@
 --   - Es comptabilitzen els articles traduïts a diferents llengües: un article
 --     en català i anglès compta dues vegades.
 --   - Si un mateix article té format imprès i digital, compta dues vegades
---     (una per cada format/galley).
+--     (una per cada galley).
 --
 --   Camps de sortida:
 --     revista          -> j.path (ex: brumal)
@@ -20,11 +20,12 @@
 
 SELECT
     j.path AS revista,
-    CONCAT(
-        YEAR(DATE_SUB(i.date_published, INTERVAL IF(MONTH(i.date_published) < 9, 1, 0) YEAR)),
-        '-',
-        YEAR(DATE_SUB(i.date_published, INTERVAL IF(MONTH(i.date_published) < 9, 1, 0) YEAR)) + 1
-    ) AS curs,
+    CASE
+        WHEN MONTH(i.date_published) >= 9 THEN
+            CONCAT(YEAR(i.date_published), '-', YEAR(i.date_published) + 1)
+        ELSE
+            CONCAT(YEAR(i.date_published) - 1, '-', YEAR(i.date_published))
+    END AS curs,
     g.locale AS llengua,
     COUNT(*) AS nombre_articles
 FROM journals j
@@ -40,16 +41,24 @@ JOIN submissions s
     AND s.status = 3
 JOIN publication_galleys g
     ON g.publication_id = p.publication_id
-JOIN journal_settings js_issn
-    ON js_issn.journal_id = j.journal_id
-    AND js_issn.setting_name = 'issn'
-    AND js_issn.setting_value IS NOT NULL
-    AND js_issn.setting_value <> ''
 WHERE i.date_published IS NOT NULL
   AND g.locale IS NOT NULL
+  AND g.locale <> ''
+  AND EXISTS (
+      SELECT 1 FROM journal_settings js
+      WHERE js.journal_id = j.journal_id
+        AND js.setting_name LIKE '%issn%'
+        AND js.setting_value IS NOT NULL
+        AND js.setting_value <> ''
+  )
 GROUP BY
     j.path,
-    curs,
+    CASE
+        WHEN MONTH(i.date_published) >= 9 THEN
+            CONCAT(YEAR(i.date_published), '-', YEAR(i.date_published) + 1)
+        ELSE
+            CONCAT(YEAR(i.date_published) - 1, '-', YEAR(i.date_published))
+    END,
     g.locale
 ORDER BY
     curs DESC,
